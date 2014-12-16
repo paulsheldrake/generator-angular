@@ -1,9 +1,8 @@
-# AngularJS generator [![Build Status](https://secure.travis-ci.org/yeoman/generator-angular.png?branch=master)](http://travis-ci.org/yeoman/generator-angular)
+# AngularJS generator [![Build Status](https://secure.travis-ci.org/yeoman/generator-angular.svg?branch=master)](http://travis-ci.org/yeoman/generator-angular)
 
-Maintainer: [Brian Ford](https://github.com/btford)
+> Yeoman generator for AngularJS - lets you quickly set up a project with sensible defaults and best practices.
 
-Based on [angular-seed](https://github.com/angular/angular-seed/)
-
+[Roadmap for upcoming plans/features/fixes](https://github.com/yeoman/generator-angular/issues/553)
 
 ## Usage
 
@@ -22,6 +21,9 @@ Run `yo angular`, optionally passing an app name:
 yo angular [app-name]
 ```
 
+Run `grunt` for building and `grunt serve` for preview
+
+
 ## Generators
 
 Available generators:
@@ -36,13 +38,13 @@ Available generators:
 * [angular:factory](#service)
 * [angular:value](#service)
 * [angular:constant](#service)
-* [angular:decorator] (#decorator)
+* [angular:decorator](#decorator)
 * [angular:view](#view)
 
 **Note: Generators are to be run from the root directory of your app.**
 
 ### App
-Sets up a new AngularJS app, generating all the boilerplate you need to get started. The app generator also optionally installs Twitter Bootstrap and additional AngularJS modules, such as angular-resource.
+Sets up a new AngularJS app, generating all the boilerplate you need to get started. The app generator also optionally installs Bootstrap and additional AngularJS modules, such as angular-resource (installed by default).
 
 Example:
 ```bash
@@ -68,6 +70,16 @@ Produces `app/views/myroute.html`:
 ```html
 <p>This is the myroute view</p>
 ```
+
+**Explicitly provide route URI**
+
+Example:
+```bash
+yo angular:route myRoute --uri=my/route
+```
+
+Produces controller and view as above and adds a route to `app/scripts/app.js`
+with URI `my/route`
 
 ### Controller
 Generates a controller in `app/scripts/controllers`.
@@ -188,41 +200,30 @@ angular.module('myMod')
 
 A project can mix CoffeScript and JavaScript files.
 
+To output JavaScript files, even if CoffeeScript files exist (the default is to output CoffeeScript files if the generator finds any in the project), use `--coffee=false`.
+
 ### Minification Safe
-By default, generators produce unannotated code. Without annotations, AngularJS's DI system will break when minified. Typically, these annotations the make minification safe are added automatically at build-time, after application files are concatenated, but before they are minified. By providing the `--minsafe` option, the code generated will out-of-the-box be ready for minification. The trade-off is between amount of boilerplate, and build process complexity.
 
-#### Example
+**tl;dr**: You don't need to write annotated code as the build step will
+handle it for you.
+
+By default, generators produce unannotated code. Without annotations, AngularJS's DI system will break when minified. Typically, these annotations that make minification safe are added automatically at build-time, after application files are concatenated, but before they are minified. The annotations are important because minified code will rename variables, making it impossible for AngularJS to infer module names based solely on function parameters.
+
+The recommended build process uses `ng-annotate`, a tool that automatically adds these annotations. However, if you'd rather not use it, you have to add these annotations manually yourself. Why would you do that though? If you find a bug
+in the annotated code, please file an issue at [ng-annotate](https://github.com/olov/ng-annotate/issues).
+
+
+### Add to Index
+By default, new scripts are added to the index.html file. However, this may not always be suitable. Some use cases:
+
+* Manually added to the file
+* Auto-added by a 3rd party plugin
+* Using this generator as a subgenerator
+
+To skip adding them to the index, pass in the skip-add argument:
 ```bash
-yo angular:controller user --minsafe
+yo angular:service serviceName --skip-add
 ```
-
-Produces `app/controller/user.js`:
-```javascript
-angular.module('myMod').controller('UserCtrl', ['$scope', function ($scope) {
-  // ...
-}]);
-```
-
-#### Background
-Unannotated:
-```javascript
-angular.module('myMod').controller('MyCtrl', function ($scope, $http, myService) {
-  // ...
-});
-```
-
-Annotated:
-```javascript
-angular.module('myMod').controller('MyCtrl',
-  ['$scope', '$http', 'myService', function ($scope, $http, myService) {
-
-    // ...
-  }]);
-```
-
-The annotations are important because minified code will rename variables, making it impossible for AngularJS to infer module names based solely on function parameters.
-
-The recommended build process uses `ngmin`, a tool that automatically adds these annotations. However, if you'd rather not use `ngmin`, you have to add these annotations manually yourself.
 
 ## Bower Components
 
@@ -235,8 +236,10 @@ The following packages are always installed by the [app](#app) generator:
 
 The following additional modules are available as components on bower, and installable via `bower install`:
 
+* angular-animate
+* angular-aria
 * angular-cookies
-* angular-loader
+* angular-messages
 * angular-resource
 * angular-sanitize
 
@@ -259,18 +262,14 @@ You can change the `app` directory by adding a `appPath` property to `bower.json
 ```
 This will cause Yeoman-generated client-side files to be placed in `public`.
 
-## Testing
-
-For tests to work properly, karma needs the `angular-mocks` bower package.
-This script is included in the bower.json in the `devDependencies` section, which will
-be available very soon, probably with the next minor release of bower.
-
-While bower `devDependencies` are not yet implemented, you can fix it by running:
+Note that you can also achieve the same results by adding an `--appPath` option when starting generator:
 ```bash
-bower install angular-mocks
+yo angular [app-name] --appPath=public
 ```
 
-By running `grunt test` you should now be able to run your unit tests with karma.
+## Testing
+
+Running `grunt test` will run the unit tests with karma.
 
 ## Contribute
 
@@ -283,6 +282,10 @@ When submitting a PR, make sure that the commit messages match the [AngularJS co
 When submitting a bugfix, write a test that exposes the bug and fails before applying your fix. Submit the test alongside the fix.
 
 When submitting a new feature, add tests that cover the feature.
+
+## Changelog
+
+Recent changes can be viewed on Github on the [Releases Page](https://github.com/yeoman/generator-angular/releases)
 
 ## License
 

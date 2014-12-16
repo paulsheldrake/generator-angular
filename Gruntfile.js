@@ -1,12 +1,24 @@
 'use strict';
-var markdown = require('marked');
 var semver = require('semver');
 
 module.exports = function (grunt) {
   require('load-grunt-tasks')(grunt);
 
   grunt.initConfig({
-    pkg: grunt.file.readJSON('package.json'),
+    pkg: require('./package.json'),
+    jshint: {
+      all: {
+        options: {
+          jshintrc: './.jshintrc'
+        },
+        src: [
+          '**/index.js',
+          '*.js',
+          '!test/**/*.js',
+          '!node_modules/**/*.js'
+        ]
+      }
+    },
     changelog: {
       options: {
         dest: 'CHANGELOG.md',
@@ -15,10 +27,15 @@ module.exports = function (grunt) {
     },
     release: {
       options: {
-        commitMessage: '<%= version %>',
-        tagName: 'v<%= version %>',
         bump: false, // we have our own bump
-        file: 'package.json'
+        file: 'package.json',
+        commitMessage: 'chore(release): Release version <%= version %>',
+        tagName: 'v<%= version %>',
+        github: {
+          repo: 'yeoman/generator-angular',
+          usernameVar: 'GITHUB_USERNAME',
+          passwordVar: 'GITHUB_AUTHTOKEN'
+        }
       }
     },
     stage: {
@@ -28,7 +45,9 @@ module.exports = function (grunt) {
     }
   });
 
-  grunt.registerTask('bump', 'bump manifest version', function (type) {
+  grunt.registerTask('default', ['jshint']);
+
+  grunt.registerTask('bump', 'Bump manifest version', function (type) {
     var options = this.options({
       file: grunt.config('pkgFile') || 'package.json'
     });
@@ -44,11 +63,15 @@ module.exports = function (grunt) {
     }
 
     var config = setup(options.file, type);
-    grunt.file.write(config.file, JSON.stringify(config.pkg, null, '  ') + '\n');
+    grunt.file.write(
+      config.file,
+      JSON.stringify(config.pkg, null, '  ') + '\n'
+    );
+    grunt.config('pkg', config.pkg);
     grunt.log.ok('Version bumped to ' + config.newVersion);
   });
 
-  grunt.registerTask('stage', 'git add files before running the release task', function () {
+  grunt.registerTask('stage', 'Git adds files', function () {
     var files = this.options().files;
     grunt.util.spawn({
       cmd: process.platform === 'win32' ? 'git.cmd' : 'git',
@@ -56,5 +79,16 @@ module.exports = function (grunt) {
     }, grunt.task.current.async());
   });
 
-  grunt.registerTask('default', ['bump', 'changelog', 'stage', 'release']);
+  // grunt-release will only commit the package.json file by default. Until
+  // https://github.com/geddski/grunt-release/pull/43/files lands, it should
+  // be patched to do the same so it commits the changelog as well.
+  grunt.registerTask('publish', function (type) {
+    grunt.task.run([
+      'default',
+      'bump' + (type ? ':' + type : ''),
+      'changelog',
+      'stage',
+      'release'
+    ]);
+  });
 };

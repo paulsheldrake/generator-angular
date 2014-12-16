@@ -1,6 +1,15 @@
 'use strict';
 
-angular.module('<%= _.camelize(appname) %>App', [<%= angularModules %>])
+/**
+ * @ngdoc overview
+ * @name <%= scriptAppName %>
+ * @description
+ * # <%= scriptAppName %>
+ *
+ * Main module of the application.
+ */
+angular
+  .module('<%= scriptAppName %>', [<%= angularModules %>])<% if (ngRoute) { %>
   .config(function ($routeProvider) {
     $routeProvider
       .when('/', {
@@ -10,4 +19,4 @@ angular.module('<%= _.camelize(appname) %>App', [<%= angularModules %>])
       .otherwise({
         redirectTo: '/'
       });
-  });
+  })<% } %>;

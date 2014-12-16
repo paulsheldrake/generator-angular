@@ -1,7 +1,14 @@
 'use strict';
 
-angular.module('<%= _.camelize(appname) %>App')
-  .provider('<%= _.camelize(name) %>', function () {
+/**
+ * @ngdoc service
+ * @name <%= scriptAppName %>.<%= cameledName %>
+ * @description
+ * # <%= cameledName %>
+ * Provider in the <%= scriptAppName %>.
+ */
+angular.module('<%= scriptAppName %>')
+  .provider('<%= cameledName %>', function () {
 
     // Private variables
     var salutation = 'Hello';

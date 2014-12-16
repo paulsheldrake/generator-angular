@@ -1,126 +1,147 @@
 /*global describe, before, it, beforeEach */
 'use strict';
-var fs = require('fs');
-var assert = require('assert');
-var path = require('path');
-var util = require('util');
-var generators = require('yeoman-generator');
-var helpers = require('yeoman-generator').test;
 
+var path = require('path');
+var helpers = require('yeoman-generator').test;
+var _ = require('underscore.string');
 
 describe('Angular generator', function () {
   var angular;
+  var expected = [
+    'app/.htaccess',
+    'app/404.html',
+    'app/favicon.ico',
+    'app/robots.txt',
+    'app/styles/main.scss',
+    'app/views/main.html',
+    'app/index.html',
+    '.bowerrc',
+    '.editorconfig',
+    '.gitignore',
+    '.jshintrc',
+    'Gruntfile.js',
+    'package.json',
+    'bower.json'
+  ];
+  var mockPrompts = {
+    compass: true,
+    bootstrap: true,
+    compassBootstrap: true,
+    modules: []
+  };
+  var genOptions = {
+    'appPath': 'app',
+    'skip-install': true,
+    'skip-welcome-message': true,
+    'skip-message': true
+  };
 
   beforeEach(function (done) {
-    var deps = [
-      '../../app',
-      '../../common',
-      '../../controller',
-      '../../main', [
-        helpers.createDummyGenerator(),
-        'karma:app'
-      ]
-    ];
-    helpers.testDirectory(path.join(__dirname, 'temp'), function (err) {
+    helpers.testDirectory(path.join(__dirname, 'tmp'), function (err) {
       if (err) {
         done(err);
       }
-      angular = helpers.createGenerator('angular:app', deps);
-      angular.options['skip-install'] = true;
+      angular = helpers.createGenerator(
+        'angular:app',
+        [
+          '../../app',
+          '../../common',
+          '../../controller',
+          '../../main', [
+            helpers.createDummyGenerator(),
+            'karma:app'
+          ]
+        ],
+        false,
+        genOptions
+      );
+      helpers.mockPrompt(angular, mockPrompts);
+
       done();
     });
   });
 
-  it('should generate dotfiles', function (done) {
-    helpers.mockPrompt(angular, {
-      bootstrap: true,
-      compassBoostrap: true,
-      modules: []
-    });
-
-    angular.run({}, function () {
-      helpers.assertFiles(['.bowerrc', '.gitignore', '.editorconfig', '.jshintrc']);
-      done();
-    });
-  });
-
-  it('creates expected files', function (done) {
-    var expected = ['app/.htaccess',
-                    'app/404.html',
-                    'app/favicon.ico',
-                    'app/robots.txt',
-                    'app/styles/main.css',
-                    'app/views/main.html',
-                    ['.bowerrc', /"directory": "app\/bower_components"/],
-                    'Gruntfile.js',
-                    'package.json',
-                    ['bower.json', /"name":\s+"temp"/],
-                    'app/scripts/app.js',
-                    'app/index.html',
-                    'app/scripts/controllers/main.js',
-                    'test/spec/controllers/main.js'
-                    ];
-    helpers.mockPrompt(angular, {
-      bootstrap: true,
-      compassBoostrap: true,
-      modules: []
-    });
-
-    angular.run({}, function() {
-      helpers.assertFiles(expected);
-      done();
-    });
-  });
-
-  it('creates coffeescript files', function (done) {
-    var expected = ['app/.htaccess',
-                    'app/404.html',
-                    'app/favicon.ico',
-                    'app/robots.txt',
-                    'app/styles/main.css',
-                    'app/views/main.html',
-                    ['.bowerrc', /"directory": "app\/bower_components"/],
-                    'Gruntfile.js',
-                    'package.json',
-                    ['bower.json', /"name":\s+"temp"/],
-                    'app/scripts/app.coffee',
-                    'app/index.html',
-                    'app/scripts/controllers/main.coffee',
-                    'test/spec/controllers/main.coffee'
-                    ];
-    helpers.mockPrompt(angular, {
-      bootstrap: true,
-      compassBoostrap: true,
-      modules: []
-    });
-
-    angular.env.options.coffee = true;
-    angular.run([], function () {
-      helpers.assertFiles(expected);
-      done();
-    });
-  });
-
-  describe('Controller', function () {
-    it('should generate a new controller', function (done) {
-      var angularCtrl;
-      var deps = ['../../controller'];
-      angularCtrl = helpers.createGenerator('angular:controller', deps, ['foo']);
-
-      helpers.mockPrompt(angular, {
-        bootstrap: true,
-        compassBoostrap: true,
-        modules: []
+  describe('App files', function () {
+    it('should generate dotfiles', function (done) {
+      angular.run({}, function () {
+        helpers.assertFile(expected);
+        done();
       });
+    });
+
+    it('creates expected JS files', function (done) {
+      angular.run({}, function() {
+        helpers.assertFile([].concat(expected, [
+          'app/scripts/app.js',
+          'app/scripts/controllers/main.js',
+          'test/spec/controllers/main.js'
+        ]));
+        done();
+      });
+    });
+
+    it('creates CoffeeScript files', function (done) {
+      angular.env.options.coffee = true;
       angular.run([], function () {
-        angularCtrl.run([], function () {
-          helpers.assertFiles([
-            ['app/scripts/controllers/foo.js', /controller\('FooCtrl'/],
-            ['test/spec/controllers/foo.js', /describe\('Controller: FooCtrl'/]
+        helpers.assertFile([].concat(expected, [
+          'app/scripts/app.coffee',
+          'app/scripts/controllers/main.coffee',
+          'test/spec/controllers/main.coffee'
+        ]));
+        done();
+      });
+    });
+  });
+
+  describe('Service Subgenerators', function () {
+    var generatorTest = function (generatorType, specType, targetDirectory, scriptNameFn, specNameFn, suffix, done) {
+      var name = 'foo';
+      var deps = [path.join('../..', generatorType)];
+      var genTester = helpers.createGenerator('angular:' + generatorType, deps, [name], genOptions);
+
+      angular.run([], function () {
+        genTester.run([], function () {
+          helpers.assertFileContent([
+            [
+              path.join('app/scripts', targetDirectory, name + '.js'),
+              new RegExp(
+                generatorType + '\\(\'' + scriptNameFn(name) + suffix + '\'',
+                'g'
+              )
+            ],
+            [
+              path.join('test/spec', targetDirectory, name + '.js'),
+              new RegExp(
+                'describe\\(\'' + _.classify(specType) + ': ' + specNameFn(name) + suffix + '\'',
+                'g'
+              )
+            ]
           ]);
           done();
         });
       });
+    };
+
+    it('should generate a new controller', function (done) {
+      generatorTest('controller', 'controller', 'controllers', _.classify, _.classify, 'Ctrl', done);
+    });
+
+    it('should generate a new directive', function (done) {
+      generatorTest('directive', 'directive', 'directives', _.camelize, _.camelize, '', done);
+    });
+
+    it('should generate a new filter', function (done) {
+      generatorTest('filter', 'filter', 'filters', _.camelize, _.camelize, '', done);
+    });
+
+    ['constant', 'factory', 'provider', 'value'].forEach(function(t) {
+      it('should generate a new ' + t, function (done) {
+        generatorTest(t, 'service', 'services', _.camelize, _.camelize, '', done);
+      });
+    });
+
+    it('should generate a new service', function (done) {
+      generatorTest('service', 'service', 'services', _.capitalize, _.capitalize, '', done);
     });
   });
 
@@ -128,40 +149,24 @@ describe('Angular generator', function () {
     it('should generate a new view', function (done) {
       var angularView;
       var deps = ['../../view'];
-      angularView = helpers.createGenerator('angular:view', deps, ['foo']);
+      angularView = helpers.createGenerator('angular:view', deps, ['foo'], genOptions);
 
-      helpers.mockPrompt(angular, {
-        bootstrap: true,
-        compassBoostrap: true,
-        modules: []
-      });
-      angular.run([], function (){
-        angularView.run([], function () {
-          helpers.assertFiles([
-            ['app/views/foo.html']
-          ]);
-          done();
-        });
+      helpers.mockPrompt(angularView, mockPrompts);
+      angularView.run([], function () {
+        helpers.assertFile(['app/views/foo.html']);
+        done();
       });
     });
 
     it('should generate a new view in subdirectories', function (done) {
       var angularView;
       var deps = ['../../view'];
-      angularView = helpers.createGenerator('angular:view', deps, ['foo/bar']);
+      angularView = helpers.createGenerator('angular:view', deps, ['foo/bar'], genOptions);
 
-      helpers.mockPrompt(angular, {
-        bootstrap: true,
-        compassBoostrap: true,
-        modules: []
-      });
-      angular.run([], function (){
-        angularView.run([], function () {
-          helpers.assertFiles([
-            ['app/views/foo/bar.html']
-          ]);
-          done();
-        });
+      helpers.mockPrompt(angularView, mockPrompts);
+      angularView.run([], function () {
+        helpers.assertFile(['app/views/foo/bar.html']);
+        done();
       });
     });
   });

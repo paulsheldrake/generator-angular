@@ -1,9 +1,16 @@
 'use strict';
 
-angular.module('<%= _.camelize(appname) %>App')
-    .config(function ($provide) {
-        $provide.decorator('<%= _.camelize(name) %>', function ($delegate) {
-            // decorate the $delegate
-            return $delegate;
-        });
+/**
+ * @ngdoc function
+ * @name <%= scriptAppName %>.decorator:<%= classedName %>
+ * @description
+ * # <%= classedName %>
+ * Decorator of the <%= scriptAppName %>
+ */
+angular.module('<%= scriptAppName %>')
+  .config(function ($provide) {
+    $provide.decorator('<%= cameledName %>', function ($delegate) {
+      // decorate the $delegate
+      return $delegate;
     });
+  });

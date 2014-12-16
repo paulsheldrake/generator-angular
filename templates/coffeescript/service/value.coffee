@@ -1,4 +1,11 @@
-'use strict';
+'use strict'
 
-angular.module('<%= _.camelize(appname) %>App')
-  .value '<%= _.camelize(name) %>', 42
+###*
+ # @ngdoc service
+ # @name <%= scriptAppName %>.<%= cameledName %>
+ # @description
+ # # <%= cameledName %>
+ # Value in the <%= scriptAppName %>.
+###
+angular.module('<%= scriptAppName %>')
+  .value '<%= cameledName %>', 42

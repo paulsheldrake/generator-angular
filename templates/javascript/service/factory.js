@@ -1,7 +1,14 @@
 'use strict';
 
-angular.module('<%= _.camelize(appname) %>App')
-  .factory('<%= _.camelize(name) %>', function () {
+/**
+ * @ngdoc service
+ * @name <%= scriptAppName %>.<%= cameledName %>
+ * @description
+ * # <%= cameledName %>
+ * Factory in the <%= scriptAppName %>.
+ */
+angular.module('<%= scriptAppName %>')
+  .factory('<%= cameledName %>', function () {
     // Service logic
     // ...
 

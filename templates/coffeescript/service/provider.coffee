@@ -1,7 +1,14 @@
 'use strict'
 
-angular.module('<%= _.camelize(appname) %>App')
-  .provider '<%= _.camelize(name) %>', [->
+###*
+ # @ngdoc service
+ # @name <%= scriptAppName %>.<%= cameledName %>
+ # @description
+ # # <%= cameledName %>
+ # Provider in the <%= scriptAppName %>.
+###
+angular.module('<%= scriptAppName %>')
+  .provider '<%= cameledName %>', ->
 
     # Private variables
     salutation = 'Hello'
@@ -18,4 +25,5 @@ angular.module('<%= _.camelize(appname) %>App')
     # Method for instantiating
     @$get = ->
       new Greeter()
-  ]
+      
+    return
